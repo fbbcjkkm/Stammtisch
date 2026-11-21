@@ -119,7 +119,7 @@ onAuthStateChanged(auth,function(u){
   if(!sn.exists()){push();return}
   var d=sn.data();
   if(sn.metadata.hasPendingWrites||d.t===lastT){if(idle())window.render();return}
-  try{var n=JSON.parse(d.json);window.S=Object.assign(window.S,n);if(window.mig3())push();try{localStorage.setItem("st",JSON.stringify(window.S))}catch(e){}}catch(e){}
+  try{var n=JSON.parse(d.json);n.mig3=n.mig3||false;window.S=Object.assign(window.S,n);if(window.mig3())push();try{localStorage.setItem("st",JSON.stringify(window.S))}catch(e){}}catch(e){}
   if(idle())window.render();
  },function(){window.DBS="⚠️ keine Verbindung";window.render()});
 });
