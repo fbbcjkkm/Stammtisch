@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stammtisch</title>
+<style>
+:root{--bg:#faf8f4;--card:#fff;--tx:#222;--mu:#777;--ac:#b8651b;--ln:#e5e0d6;--ok:#2e7d32;--bad:#c62828;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1a17;--card:#27241f;--tx:#eee;--mu:#9a948a;--ln:#3a362f;--ac:#e08a3c;--ok:#66bb6a;--bad:#ef5350}}
+:root[data-theme="dark"]{--bg:#1c1a17;--card:#27241f;--tx:#eee;--mu:#9a948a;--ln:#3a362f;--ac:#e08a3c;--ok:#66bb6a;--bad:#ef5350}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif;padding-bottom:70px}
+h1{font-size:20px;margin:14px 14px 4px}h2{font-size:16px;margin:0 0 8px}
+.c{background:var(--card);border:1px solid var(--ln);border-radius:12px;margin:10px 12px;padding:12px}
+.r{display:flex;align-items:center;gap:6px;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--ln)}.r:last-child{border:0}
+button,select,input{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--ln);background:var(--card);color:var(--tx)}
+button{cursor:pointer}.on{background:var(--ac);color:#fff;border-color:var(--ac)}.sm{padding:5px 8px;font-size:14px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;border:0;border-radius:0;padding:14px 2px;font-size:13px;background:none}nav .on{background:none;color:var(--ac);font-weight:700}
+.mu{color:var(--mu);font-size:14px}.neg{color:var(--bad)}.pos{color:var(--ok)}.big{font-size:26px;font-weight:700}
+.row2{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.row2>*{flex:1;min-width:90px}
+#lock{text-align:center;padding:80px 20px}
+</style></head><body>
+<div id="app"></div><nav id="nav"></nav>
+<script>
+var P0=['David','Karsten','Michael','Taki','Thomas','Sebastian','Tobias'],T='abend',D='';
+var S={people:P0.slice(),ev:{},closed:{},games:[],sp:[],pay:[],rd:1.5,unlocked:false};
+try{var x=localStorage.getItem('st');if(x)S=Object.assign(S,JSON.parse(x))}catch(e){}
+if(!S.mig1){S.people=S.people.filter(function(p){return p!='Onur'});S.mig1=true}
+if(!S.mig2){S.games=S.games.filter(function(g){return !g.gs});delete S.guests;S.mig2=true}
+var DBS='⏳ verbinde …',LOGGED=false,READY=false,fbPush=null;
+function sv(){try{localStorage.setItem('st',JSON.stringify(S))}catch(e){}if(fbPush)fbPush();render()}
+var $=function(i){return document.getElementById(i)};
+function eur(v){return v.toFixed(2).replace('.',',')+' €'}
+function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+D=today();
+var FEE={p:5,e:10,n:20};
+function st(d,p){return (S.ev[d]||{})[p]||'o'}
+function lk(){if(S.closed[D]){alert('Dieser Abend ist abgeschlossen. Erst wieder öffnen.');return true}return false}function setSt(p,v){if(lk())return;S.ev[D]=S.ev[D]||{};S.ev[D][p]=v;sv()}
+function npres(d){return S.people.filter(function(p){return st(d,p)=='p'}).length}
+function closeEv(){S.people.forEach(function(p){if(st(D,p)=='o'){S.ev[D]=S.ev[D]||{};S.ev[D][p]='n'}});S.closed[D]=true;T='verlauf';sv()}function reopenEv(){delete S.closed[D];sv()}
+function fees(p){var t=0;for(var d in S.ev){var s=S.ev[d][p];if(s)t+=FEE[s]||0}
+ S.games.forEach(function(g){if(g.l==p)t+=g.n*S.rd});S.sp.forEach(function(s){if(s.p==p)t+=s.a});return t}
+function paid(p){return S.pay.filter(function(q){return q.p==p&&q.k=='kasse'}).reduce(function(a,q){return a+q.a},0)}
+function num(s){return parseFloat(String(s).replace(',','.'))}
+function opts(sel){return S.people.map(function(p){return '<option'+(p==sel?' selected':'')+'>'+p+'</option>'}).join('')}
+function nav(){var t=[['abend','Abend'],['konto','Konten'],['verlauf','Verlauf'],['kasse','Kasse'],['team','Team']];
+ $('nav').innerHTML=t.map(function(a){return '<button class="'+(T==a[0]?'on':'')+'" onclick="T=\''+a[0]+'\';render()">'+a[1]+'</button>'}).join('')}
+function vAbend(){var h='<h1>Stammtisch <span class="mu" style="font-size:13px">'+DBS+'</span></h1><div class="c"><input type="date" value="'+D+'" onchange="D=this.value;render()"> <span class="mu">'+npres(D)+' anwesend'+(S.closed[D]?' · 🔒 abgeschlossen':'')+'</span></div><div class="c"><h2>Check-in</h2>';
+ S.people.forEach(function(p){var s=st(D,p);function b(v,l){return '<button class="sm '+(s==v?'on':'')+'" onclick="setSt(\''+p+'\',\''+v+'\')">'+l+'</button>'}
+  h+='<div class="r"><b>'+p+'</b><span>'+b('p','Da')+b('e','Absage')+b('n','Fehlt')+'</span></div>'});
+ h+='<p class="mu">Da 5 € · Absage 10 € · ohne Absage 20 €. Nachträglich änderbar.</p></div>';
+ h+='<div class="c"><h2>Spielrunde</h2><div class="row2"><select id="gl">'+opts()+'</select><input id="gn" type="number" min="1" value="'+npres(D)+'"></div><div class="row2"><button onclick="addG()">Verlierer eintragen ('+eur(S.rd)+' pro Spieler)</button></div>';
+ S.games.filter(function(g){return g.d==D}).forEach(function(g,k){h+='<div class="r"><span><b>'+(k+1)+'.</b> '+g.l+' <span class="mu">('+g.n+' Spieler)</span></span><span>'+eur(g.n*S.rd)+' <button class="sm" onclick="delG('+g.i+')">✕</button></span></div>'});
+ h+='</div><div class="c"><h2>Sonderstrafe</h2><div class="row2"><select id="sp">'+opts()+'</select><input id="sa" placeholder="Betrag €" inputmode="decimal"></div><div class="row2"><input id="stx" placeholder="Grund (Pflicht)"></div><div class="row2"><button onclick="addS()">Eintragen</button></div>';
+ S.sp.filter(function(s){return s.d==D}).forEach(function(s){h+='<div class="r"><span>'+s.p+' <span class="mu">'+s.t+'</span></span><span>'+eur(s.a)+' <button class="sm" onclick="delS('+s.i+')">✕</button></span></div>'});
+ h+='</div><div class="c">'+(S.closed[D]?'<button style="width:100%" onclick="reopenEv()">Abend wieder öffnen</button>':'<button class="on" style="width:100%" onclick="closeEv()">Abend abschließen &amp; speichern</button><p class="mu">Offene Personen gelten als „ohne Absage“ (20 €). Danach ist der Abend im Verlauf gespeichert.</p>')+'</div>';return h}
+function addG(){if(lk())return;S.games.push({i:Date.now(),d:D,l:$('gl').value,n:parseInt($('gn').value)||1});sv()}
+function delG(i){if(lk())return;S.games=S.games.filter(function(g){return g.i!=i});sv()}
+function addS(){if(lk())return;var a=num($('sa').value),t=$('stx').value.trim();if(!(a>0)||!t){alert('Betrag und Grund sind Pflicht.');return}S.sp.push({i:Date.now(),d:D,p:$('sp').value,a:a,t:t});sv()}
+function delS(i){if(lk())return;S.sp=S.sp.filter(function(s){return s.i!=i});sv()}
+function fd(d){return d.split('-').reverse().join('.')}
+function evCost(d){var t=0;S.people.forEach(function(p){t+=FEE[st(d,p)]||0});S.games.forEach(function(g){if(g.d==d)t+=g.n*S.rd});S.sp.forEach(function(s){if(s.d==d)t+=s.a});return t}
+function vVerlauf(){var ds={},h='<h1>Verlauf</h1>';for(var d in S.ev)ds[d]=1;S.games.forEach(function(g){ds[g.d]=1});S.sp.forEach(function(s){ds[s.d]=1});var l=Object.keys(ds).sort().reverse();if(!l.length)return h+'<div class="c mu">Noch keine Abende.</div>';
+ l.forEach(function(d){var gl=function(v){return S.people.filter(function(p){return st(d,p)==v}).join(', ')||'–'};
+  h+='<div class="c"><div class="r"><b>'+fd(d)+(S.closed[d]?' 🔒':'')+'</b><span>'+eur(evCost(d))+'</span></div><p class="mu">Da: '+gl('p')+'<br>Absage: '+gl('e')+'<br>Fehlt: '+gl('n')+'</p>';
+  var gs=S.games.filter(function(x){return x.d==d}),ss=S.sp.filter(function(x){return x.d==d});
+  if(gs.length)h+='<p class="mu">Spielrunden:<br>'+gs.map(function(x,k){return (k+1)+'. '+x.l+' ('+x.n+' Spieler, '+eur(x.n*S.rd)+')'}).join('<br>')+'</p>';
+  if(ss.length)h+='<p class="mu">Sonderstrafen: '+ss.map(function(x){return x.p+' '+eur(x.a)+' – '+x.t}).join('; ')+'</p>';
+  h+='<div class="row2"><button onclick="D=\''+d+'\';T=\'abend\';render()">Ansehen / Bearbeiten</button></div></div>'});
+ return h}
+function vKonto(){var h='<h1>Konten</h1><div class="c"><p class="mu" style="margin:0 0 6px">Betrag anpassen (z. B. für Teilzahlungen) und dann „Bezahlt“ tippen.</p>';
+ S.people.forEach(function(p,i){var o=fees(p)-paid(p);h+='<div style="padding:8px 0;border-bottom:1px solid var(--ln)"><div class="r" style="border:0"><span><b>'+p+'</b><br><span class="mu">Gesamt '+eur(fees(p))+' · bezahlt '+eur(paid(p))+'</span></span><span class="'+(o>0?'neg':'pos')+'">Offen '+eur(o)+'</span></div><div class="row2"><input id="k'+i+'" inputmode="decimal" value="'+(o>0?o.toFixed(2).replace('.',','):'')+'"><button class="on" onclick="payK(\''+p+'\','+i+')">Bezahlt</button></div></div>'});
+ return h+'</div>'}
+function payK(p,i){var a=num($('k'+i).value);if(!(a>0)){alert('Bitte einen Betrag eingeben.');return}S.pay.push({i:Date.now(),p:p,a:a,k:'kasse',d:D});sv()}
+function vKasse(){var t=0,b=0;S.people.forEach(function(p){t+=fees(p);b+=paid(p)});
+ return '<h1>Gemeinschaftskasse</h1><div class="c"><div class="mu">In der Kasse (bezahlt)</div><div class="big pos">'+eur(b)+'</div></div><div class="c"><div class="mu">Noch offen</div><div class="big neg">'+eur(t-b)+'</div><p class="mu">Gesamt angefallen: '+eur(t)+'</p></div>'}
+function vTeam(){var h='<h1>Team</h1><div class="c"><h2>Personen</h2>';
+ S.people.forEach(function(p,i){h+='<div class="r"><span>'+p+'</span><button class="sm" onclick="rmP('+i+')">entfernen</button></div>'});
+ h+='<div class="row2"><input id="np" placeholder="Neuer Name"><button onclick="addP()">Hinzufügen</button></div></div>';
+ h+='<div class="c"><h2>Einstellungen</h2><div class="row2"><label>Runde pro Spieler €<input id="rd" value="'+String(S.rd).replace('.',',')+'"></label></div><div class="row2"><button onclick="setCfg()">Speichern</button></div></div>';
+ return h+'<p class="mu" style="margin:12px">Prototyp: Daten liegen nur auf diesem Handy. Gemeinsame Datenbank und Passwort folgen im nächsten Schritt.</p>'}
+function addP(){var n=$('np').value.trim();if(n&&S.people.indexOf(n)<0){S.people.push(n);sv()}}
+function rmP(i){if(confirm('Wirklich entfernen? Bisherige Einträge bleiben erhalten.')){S.people.splice(i,1);sv()}}
+function setCfg(){var a=num($('rd').value);if(a>0)S.rd=a;sv()}
+function unlock(){var b=$('pw').value;if(!b)return;window.fbLogin(b).catch(function(){alert('Falsches Passwort oder keine Verbindung.')})}
+function render(){if(!READY){$('nav').innerHTML='';$('app').innerHTML='<div id="lock"><p class="mu">Lädt …</p></div>';return}if(!LOGGED){$('nav').innerHTML='';$('app').innerHTML='<div id="lock"><h1>🍺 Stammtisch</h1><p class="mu">Bitte Gruppenpasswort eingeben</p><div class="row2"><input id="pw" type="password" placeholder="Passwort"><button class="on" onclick="unlock()">Öffnen</button></div></div>';return}nav();var v={abend:vAbend,konto:vKonto,verlauf:vVerlauf,kasse:vKasse,team:vTeam}[T];$('app').innerHTML=v()}
+render();
+</script><script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,doc,onSnapshot,setDoc} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+const cfg={apiKey:"AIzaSyA0gGiSymclAezDtJ-iPR-h00fnQN1cnDU",authDomain:"stammtisch-41117.firebaseapp.com",projectId:"stammtisch-41117",storageBucket:"stammtisch-41117.firebasestorage.app",messagingSenderId:"606803296068",appId:"1:606803296068:web:c7c435327d7f73a10f2111"};
+const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),ref=doc(db,"stammtisch","state");
+let lastT=0,unsub=null;
+window.fbLogin=function(pw){return signInWithEmailAndPassword(auth,"stammtisch@example.com",pw)};
+function push(){lastT=Date.now();setDoc(ref,{json:JSON.stringify(window.S),t:lastT}).then(function(){window.DBS="🔄 gemeinsam"}).catch(function(){window.DBS="⚠️ Speichern fehlgeschlagen";window.render()})}
+function idle(){var a=document.activeElement;return !(a&&a.tagName=="INPUT")}
+onAuthStateChanged(auth,function(u){
+ if(unsub){unsub();unsub=null}
+ window.READY=true;
+ if(!u){window.LOGGED=false;window.fbPush=null;window.render();return}
+ window.LOGGED=true;window.fbPush=push;window.DBS="🔄 verbinde …";window.render();
+ unsub=onSnapshot(ref,function(sn){
+  window.DBS="🔄 gemeinsam";
+  if(!sn.exists()){push();return}
+  var d=sn.data();
+  if(sn.metadata.hasPendingWrites||d.t===lastT){if(idle())window.render();return}
+  try{var n=JSON.parse(d.json);window.S=Object.assign(window.S,n);try{localStorage.setItem("st",JSON.stringify(window.S))}catch(e){}}catch(e){}
+  if(idle())window.render();
+ },function(){window.DBS="⚠️ keine Verbindung";window.render()});
+});
+</script>
+</body></html>
