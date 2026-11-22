@@ -35,11 +35,14 @@ try{var x=localStorage.getItem('st');if(x)S=Object.assign(S,JSON.parse(x))}catch
 if(!S.mig1){S.people=S.people.filter(function(p){return p!='Onur'});S.mig1=true}
 if(!S.mig2){S.games=S.games.filter(function(g){return !g.gs});delete S.guests;S.mig2=true}
 var NM={David:'Dave',Karsten:'Kalle',Michael:'Micha',Thomas:'Keltho',Sebastian:'Sebi',Tobias:'Tobi'};
-function mig3(){if(S.mig3)return false;var r=function(n){return NM[n]||n};
+function mig3(){if(S.mig4)return false;var r=function(n){return NM[n]||n};
  for(var d in S.ev){var o={};for(var p in S.ev[d])o[r(p)]=S.ev[d][p];S.ev[d]=o}
  S.games.forEach(function(g){g.l=r(g.l)});S.sp.forEach(function(x){x.p=r(x.p)});S.pay.forEach(function(q){q.p=r(q.p)});
- S.people=['Dave','Taki','Kalle','Sebi','Tobi','Andy','Micha','Keltho'];S.mig3=true;return true}
-mig3();
+ S.people=['Dave','Taki','Kalle','Sebi','Tobi','Andy','Micha','Keltho'];S.mig4=true;return true}
+function resetData(){S.ev={};S.closed={};S.games=[];S.sp=[];S.pay=[]}
+function rst1(){if(S.rst1)return false;resetData();S.rst1=true;return true}
+function resetAll(){if(confirm('ALLE Daten löschen? Abende, Spielrunden, Sonderstrafen und Zahlungen werden für alle entfernt. Die Personen bleiben.')&&confirm('Wirklich sicher? Das kann nicht rückgängig gemacht werden.')){resetData();sv()}}
+mig3();rst1();
 var DBS='⏳ verbinde …',LOGGED=false,READY=false,fbPush=null;
 function sv(){try{localStorage.setItem('st',JSON.stringify(S))}catch(e){}if(fbPush)fbPush();render()}
 var $=function(i){return document.getElementById(i)};
@@ -92,7 +95,7 @@ function vTeam(){var h='<h1>Team</h1><div class="c"><h2>Personen</h2>';
  S.people.forEach(function(p,i){h+='<div class="r"><span>'+p+'</span><button class="sm" onclick="rmP('+i+')">entfernen</button></div>'});
  h+='<div class="row2"><input id="np" placeholder="Neuer Name"><button onclick="addP()">Hinzufügen</button></div></div>';
  h+='<div class="c"><h2>Einstellungen</h2><div class="row2"><label>Runde pro Spieler €<input id="rd" value="'+String(S.rd).replace('.',',')+'"></label></div><div class="row2"><button onclick="setCfg()">Speichern</button></div></div>';
- return h+'<p class="mu" style="margin:12px">Prototyp: Daten liegen nur auf diesem Handy. Gemeinsame Datenbank und Passwort folgen im nächsten Schritt.</p>'}
+ return h+'<div class="c"><h2>Daten</h2><p class="mu">Löscht alle Abende, Spielrunden, Sonderstrafen und Zahlungen. Die Personen bleiben.</p><div class="row2"><button class="danger" onclick="resetAll()">Alle Daten zurücksetzen</button></div></div>'}
 function addP(){var n=$('np').value.trim();if(n&&S.people.indexOf(n)<0){S.people.push(n);sv()}}
 function rmP(i){if(confirm('Wirklich entfernen? Bisherige Einträge bleiben erhalten.')){S.people.splice(i,1);sv()}}
 function setCfg(){var a=num($('rd').value);if(a>0)S.rd=a;sv()}
@@ -119,7 +122,7 @@ onAuthStateChanged(auth,function(u){
   if(!sn.exists()){push();return}
   var d=sn.data();
   if(sn.metadata.hasPendingWrites||d.t===lastT){if(idle())window.render();return}
-  try{var n=JSON.parse(d.json);n.mig3=n.mig3||false;window.S=Object.assign(window.S,n);if(window.mig3())push();try{localStorage.setItem("st",JSON.stringify(window.S))}catch(e){}}catch(e){}
+  try{var n=JSON.parse(d.json);n.mig4=n.mig4||false;n.rst1=n.rst1||false;window.S=Object.assign(window.S,n);var c1=window.mig3(),c2=window.rst1();if(c1||c2)push();try{localStorage.setItem("st",JSON.stringify(window.S))}catch(e){}}catch(e){}
   if(idle())window.render();
  },function(){window.DBS="⚠️ keine Verbindung";window.render()});
 });
